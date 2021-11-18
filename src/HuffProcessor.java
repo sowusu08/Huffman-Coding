@@ -128,4 +128,18 @@ public class HuffProcessor {
 		out.close();
 	}
 
+	private HuffNode readTree(BitInputStream in) {
+		int bit = in.readBits(1);
+		if (bit == -1) throw new HuffException("bad input");
+		if (bit == 0) {
+			HuffNode left = readTree(in);
+			HuffNode right = readTree(in);
+			return new HuffNode(0,0,left,right);
+		}
+		else {
+			int value = in.readBits(BITS_PER_WORD+1); //read BITS_PER_WORD+1 bits from input
+			return new HuffNode(value,0,null,null);
+		}
+	}
+
 }
