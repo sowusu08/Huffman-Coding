@@ -84,14 +84,48 @@ public class HuffProcessor {
 	 *            Buffered bit stream writing to the output file.
 	 */
 	public void decompress(BitInputStream in, BitOutputStream out){
-
 		// remove all code when implementing decompress
 
-		while (true){
+		/*while (true){
 			int val = in.readBits(BITS_PER_WORD);
 			if (val == -1) break;
 			out.writeBits(BITS_PER_WORD, val);
+		}*/
+		// check that the file is Huffman-coded using the first 32-bit number; if it isn't throw an exception
+		int cod_check = in.readBits(BITS_PER_INT);
+		if(cod_check != HUFF_TREE){throw new HuffException("invalid magic number "+bits);}
+
+		// Read/create the tree used to decompress/compress using .readTree() helper method and store in root
+		HuffNode root = readTree(in);
+		HuffNode current = root;
+
+		// read the whole input file of bits and decompress it, writing this to the output file
+		// stop once we reach PSEUDO_EOF
+		while(true){
+			int bits = in.readBits(1);
+
+			// throw a HuffException if reading bits ever fails, i.e., the readBits method returns -1
+			if(bits == -1) {
+				throw new HuffException("bad input, not PSEUDO_EOF");
+			} else {
+				if (bits == 0) current = current.left; 		// read a 0, go left
+				else current = current.right;				// read a 1, go right
+
+				// if we reach a leaf node decode the character
+				if (current.left == null && current.right == null) {
+					// if decoded character is pseudo_eof stop decompressing
+					if (current.value == PSEUDO_EOF)
+						break;   // out of loop
+					else {	// otherwise write decoded character 'BITS_PER_WORD' total bits to the output file 'out'
+						out.writeBits(BITS_PER_WORD, current.value);
+						current = root; // start back at the root for nect character decoding
+					}
+				}
+			}
 		}
+
+		// Close the output file
 		out.close();
 	}
+
 }
