@@ -93,7 +93,7 @@ public class HuffProcessor {
 		}*/
 		// check that the file is Huffman-coded using the first 32-bit number; if it isn't throw an exception
 		int cod_check = in.readBits(BITS_PER_INT);
-		if(cod_check != HUFF_TREE){throw new HuffException("invalid magic number "+bits);}
+		if(cod_check != HUFF_TREE){throw new HuffException("invalid magic number "+cod_check);}
 
 		// Read/create the tree used to decompress/compress using .readTree() helper method and store in root
 		HuffNode root = readTree(in);
