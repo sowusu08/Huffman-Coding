@@ -91,8 +91,32 @@ public class HuffProcessor {
 				ret[in.readBits(BITS_PER_WORD)] += 1;
 			}
 		}
-
 		return ret;
+	}
+
+	private HuffNode makeTree(int[] counts){
+		// Creating the nodes for the tree
+		PriorityQueue<HuffNode> pq = new PriorityQueue<>();
+		for(int k = 0; k < counts.length; k++){                // where counts is an array where each index corresponds to ASCII encoding for a character
+			if(counts[k] >0){                                    // and the value at the index is the nuber of times the character occurs
+				pq.add(new HuffNode(k, counts[k], null, null));
+			}
+		}
+
+		pq.add(new HuffNode(PSEUDO_EOF,1,null,null)); // account for PSEUDO_EOF having a single occurrence
+
+		// Creating tree from HuffNodes
+		while(pq.size() > 1){
+			HuffNode left = pq.remove();
+			HuffNode right = pq.remove();
+
+			pq.add(new HuffNode(0, left.weight + right.weight, left, right));
+		}
+
+		// the last value to be removed is the root
+		// return tree
+		HuffNode root = pq.remove();
+		return root;
 	}
 
 	/**
