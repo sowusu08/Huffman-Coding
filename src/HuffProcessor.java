@@ -7,7 +7,7 @@ import java.util.PriorityQueue;
  * <P>
  * Changes include relying solely on a tree for header information
  * and including debug and bits read/written information
- * 
+ *
  * @author Ow	en Astrachan
  *
  * Revise
@@ -39,17 +39,17 @@ public class HuffProcessor {
 
 	public static final int BITS_PER_WORD = 8;
 	public static final int BITS_PER_INT = 32;
-	public static final int ALPH_SIZE = (1 << BITS_PER_WORD); 
+	public static final int ALPH_SIZE = (1 << BITS_PER_WORD);
 	public static final int PSEUDO_EOF = ALPH_SIZE;
 	public static final int HUFF_NUMBER = 0xface8200;
 	public static final int HUFF_TREE  = HUFF_NUMBER | 1;
 
 	private boolean myDebugging = false;
-	
+
 	public HuffProcessor() {
 		this(false);
 	}
-	
+
 	public HuffProcessor(boolean debug) {
 		myDebugging = debug;
 	}
@@ -66,12 +66,33 @@ public class HuffProcessor {
 
 
 		// remove all this code when implementing compress
-		while (true){
+		/*while (true){
 			int val = in.readBits(BITS_PER_WORD);
 			if (val == -1) break;
 			out.writeBits(BITS_PER_WORD, val);
-		}
+		}*/
+		//1. Determine the frequency of every eight-bit character/chunk in the file being compressed
+		int[] counts = getCounts(in);
+
 		out.close();
+	}
+
+	private int[] getCounts(BitInputStream in){
+		// initialize an array filled with zeros
+		int[] ret = new int[ALPH_SIZE];
+
+		while(true) {
+			// read 8-bit characters/chunks
+			int val = in.readBits(BITS_PER_WORD);
+			if (val == -1) {
+				break;
+			} else {
+				// if there are bits to read increment the element at the index corresponding to the value by one
+				ret[in.readBits(BITS_PER_WORD)] += 1;
+			}
+		}
+
+		return ret;
 	}
 
 	/**
@@ -93,6 +114,7 @@ public class HuffProcessor {
 		}*/
 		// check that the file is Huffman-coded using the first 32-bit number; if it isn't throw an exception
 		int cod_check = in.readBits(BITS_PER_INT);
+		//if (cod_check == -1) throw new HuffException("illegal header starts with " + cod_check);
 		if(cod_check != HUFF_TREE){throw new HuffException("invalid magic number "+cod_check);}
 
 		// Read/create the tree used to decompress/compress using .readTree() helper method and store in root
@@ -108,17 +130,20 @@ public class HuffProcessor {
 			if(bits == -1) {
 				throw new HuffException("bad input, not PSEUDO_EOF");
 			} else {
-				if (bits == 0) current = current.left; 		// read a 0, go left
-				else current = current.right;				// read a 1, go right
+				if (bits == 0) {
+					current = current.left;        // read a 0, go left
+				}else{
+					current = current.right;	// read a 1, go right
+				}
 
 				// if we reach a leaf node decode the character
 				if (current.left == null && current.right == null) {
 					// if decoded character is pseudo_eof stop decompressing
-					if (current.value == PSEUDO_EOF)
+					if (current.value == PSEUDO_EOF) {
 						break;   // out of loop
-					else {	// otherwise write decoded character 'BITS_PER_WORD' total bits to the output file 'out'
+					} else {	// otherwise write decoded character 'BITS_PER_WORD' total bits to the output file 'out'
 						out.writeBits(BITS_PER_WORD, current.value);
-						current = root; // start back at the root for nect character decoding
+						current = root; // start back at the root for next character decoding
 					}
 				}
 			}
