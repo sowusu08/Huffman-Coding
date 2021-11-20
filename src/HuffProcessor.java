@@ -119,6 +119,28 @@ public class HuffProcessor {
 		return root;
 	}
 
+	private void makeEncodings(HuffNode tree, String s, String[] encodings){
+		// where 'encodings' is an empty Strign array list of size ALPH_SIZE + 1
+		// traverse the tree
+		// for each leaf (each letter) add a '0' for each left we take on the path to the leaf
+		// add a '1' for each right we take
+
+		/*String[] encodings = new String[ALPH_SIZE + 1];*/ 	// String[] encodings should be made prior to call to makeEncodings()
+		makeEncodings(tree,"",encodings);
+
+		// base case: node has no children
+		if((tree.right == null && tree.left == null)) {
+			// add the path to the encodings
+			encodings[tree.value] = s;
+			return;
+		}
+
+		// otherwise call makeEncodings on tree.left and tree.right
+		if(tree.right != null){makeEncodings(tree.right, s+"1", encodings);}
+		if(tree.left != null){makeEncodings(tree.left, s+"0", encodings);}
+
+	}
+
 	/**
 	 * Decompresses a file. Output file must be identical bit-by-bit to the
 	 * original.
