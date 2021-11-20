@@ -1,3 +1,4 @@
+import javax.sound.midi.Soundbank;
 import java.util.PriorityQueue;
 
 /**
@@ -72,7 +73,15 @@ public class HuffProcessor {
 			out.writeBits(BITS_PER_WORD, val);
 		}*/
 		//1. Determine the frequency of every eight-bit character/chunk in the file being compressed
+		System.out.println("hi");
 		int[] counts = getCounts(in);
+		System.out.println("helllooo");
+		HuffNode root = makeTree(counts);
+		in.reset();
+		out.writeBits(BITS_PER_INT,HUFF_TREE);
+		writeTree(root,out);
+		String[] encodings = new String[ALPH_SIZE+1];
+		makeEncodings(root,"",encodings);
 
 		out.close();
 	}
@@ -88,7 +97,7 @@ public class HuffProcessor {
 				break;
 			} else {
 				// if there are bits to read increment the element at the index corresponding to the value by one
-				ret[in.readBits(BITS_PER_WORD)] += 1;
+				ret[val] += 1;
 			}
 		}
 		return ret;
@@ -126,12 +135,13 @@ public class HuffProcessor {
 		// add a '1' for each right we take
 
 		/*String[] encodings = new String[ALPH_SIZE + 1];*/ 	// String[] encodings should be made prior to call to makeEncodings()
-		makeEncodings(tree,"",encodings);
+		//makeEncodings(tree,"",encodings);
 
 		// base case: node has no children
 		if((tree.right == null && tree.left == null)) {
 			// add the path to the encodings
 			encodings[tree.value] = s;
+			System.out.println("here");
 			return;
 		}
 
@@ -212,5 +222,17 @@ public class HuffProcessor {
 			return new HuffNode(value,0,null,null);
 		}
 	}
+
+	private void writeTree(HuffNode node, BitOutputStream out){
+		if(node.left==null&&node.right==null){
+			out.writeBits(1,1);
+			out.writeBits(BITS_PER_WORD+1,node.value);
+		} else {
+			out.writeBits(1,0);
+			writeTree(node.left,out);
+			writeTree(node.right,out);
+		}
+	}
+
 
 }
